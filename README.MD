@@ -51,6 +51,7 @@ wget -c https://go.dev/dl/go1.19.4.linux-amd64.tar.gz -O - | tar -xz -C /usr/loc
 git clone https://github.com/hybridgroup/gocv
 cd gocv && make install_static
 ```
+> 静态编译
 
 ### 5.容器导出到镜像
 ```bash
@@ -60,8 +61,24 @@ docker commit go_build_arm go_build:arm64
 docker commit go_build_amd go_build:amd64
 ```
 
+### 6.编译项目
+```bash
+# arm
+docker run --rm -t \
+  -e VERSION=${版本号} -e PKG_NAME=${包名} \
+  -v /usr/bin/qemu-aarch64-static:/usr/bin/qemu-aarch64-static \
+  -v ${项目目录}:/app -v ${输出目录}:/output \
+  go_build:arm64 sh /init/build.sh
 
+#amd64
+docker run --rm -t \
+  -e VERSION=${版本号} -e PKG_NAME=${包名} \
+  -v ${项目目录}:/app -v ${输出目录}:/output \
+   go_build:amd64 sh /init/build.sh
+```
 
+### 7.错误记录
+1. arm下静态编译gocv报错
 ```bash
 root@pc-MS-7D17:/init/gocv# go run -tags static ./cmd/version/main.go 
 # command-line-arguments
@@ -71,9 +88,3 @@ root@pc-MS-7D17:/init/gocv# go run -tags static ./cmd/version/main.go
 /usr/bin/ld: cannot find -lquadmath
 collect2: error: ld returned 1 exit status
 ```
-
-
-- 清除容器 `docker stop go_s_arm && docker rm go_s_arm`
-- 清除容器 `docker stop gocv_static && docker rm gocv_static`
-- 清除容器 `docker stop go_build_amd && docker rm go_build_amd`
-- 清除容器 `docker stop go_build_arm && docker rm go_build_arm`
